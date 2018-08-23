@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - include: ../../hostname.yml
+    - name: ensure SELINUX is enabled
+      selinux:
+        policy: "{{ selinux_policy }}"
+        state: "{{ selinux_state }}"
+
+    - name: remove existing docker packages
+      yum:
+        name: docker-*
+        state: absent
+
+    - name: removing docker directories
+      file:
+        path: "{{ docker_dir }}"
+        state: absent
+
+    - name: add docker repo
+      shell: "yum-config-manager \
+            --add-repo \
+            {{ DOCKER_REPO_URL }}"
+      become: true
+
+    - name: upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+    - name: download packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      with_items:
+        - "{{ packages }}"
+
+
+    - name: Disable epel globally
+      shell: 'sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo'
+
+
+    - name: ensure docker is enabled
+      service:
+        name: docker
+        state: started
+    - name: run docker info to ensure everything is in place
+      command: docker info
+      register: docker
+
+    - debug:
+        msg: " Docker info result : {{ docker.stdout }}"

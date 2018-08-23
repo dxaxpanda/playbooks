@@ -1,0 +1,11 @@
+---
+- name: get php path
+  command: env
+  register: path 
+- debug:
+    var: path
+
+- name: setup composer binary
+  script: getcomposer.sh
+  args:
+    chdir: /tmp

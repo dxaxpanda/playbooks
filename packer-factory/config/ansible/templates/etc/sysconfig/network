@@ -1,0 +1,6 @@
+NETWORKING=yes
+HOSTNAME={{inventory_hostname}}
+NOZEROCONF=true
+GATEWAY={{network_gateway}}
+NETWORKING_IPV6=no
+

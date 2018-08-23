@@ -1,0 +1,14 @@
+---
+redhat_packages: ['wget', 'docker-ce', 'git', 'net-tools', 'bind-utils', 'iptables-services', 'bridge-utils', 'bash-completion', 'epel-release', 'sudo', 'vim', 'libselinux-python', 'yum-utils', 'device-mapper-persistent-data', 'lvm2' ]
+debian_packages: ['apt-transport-https', 'ca-certificates', 'htop', 'curl', 'gnupg2', 'software-properties-common']
+
+web_group: 'nginx'
+deploy_project: 'project_name'
+deploy_user: 'kraken'
+deploy_user_commands:
+    - "/bin/rm -rf {{deploy_path}}/*"
+    - "/usr/bin/chgrp -R {{web_group}} {{deploy_path}}/*"
+    - "/bin/chmod -R g+w {{deploy_path}}/*"
+    - "/usr/sbin/chown -R {{deploy_user}} {{deploy_path}}/*"
+deploy_path: '/home/windataco'
+

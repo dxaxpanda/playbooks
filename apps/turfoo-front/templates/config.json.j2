@@ -1,0 +1,10 @@
+{
+    "auths": {
+        "{{registry_host}}": {
+            "auth": "{{ (registry_username + ':' + registry_password) | b64encode }}"
+        }
+    },
+    "HttpHeaders": {
+        "User-Agent": "{{ docker_client_ua }}"
+    }
+}

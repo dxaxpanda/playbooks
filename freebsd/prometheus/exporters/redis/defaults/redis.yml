@@ -1,0 +1,6 @@
+author: oliber006
+exporter_file: redis_exporter
+exporter_version: 0.12.2
+exporter_port: 9121
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz
+exporter_args: "-redis.addr '10.0.0.3:6379'"

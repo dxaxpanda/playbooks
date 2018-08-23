@@ -1,0 +1,8 @@
+---
+svc_states: ['started', 'enabled' 'restarted']
+services: ['nfs-server', 'rpcbind']
+mount_ips: '127.0.0.1'
+data_domain: data_domain
+iso_domain: iso_domain
+data_dir: /data
+mount_opts: 'rw,sync,no_subtree_check,all_squash,anonuid=36,anongid=36'

@@ -1,0 +1,110 @@
+---
+- name: install required pkgs|FREEBSD
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ pkgs_freebsd }}"
+  register: install_result
+
+
+- debug:
+  msg: "Exporter install result : {{ install_result }}"
+
+- name: Setup necessary directories
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "{{ item.value.group}}"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ directories }}"
+
+- name: download exporter
+  unarchive:
+    src: "{{ exporter_url }}"
+    dest: '/opt/{{ exporter_file }}'
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  register: download_status
+  ignore_errors: True
+
+- name: Check download_status
+  debug:
+    var: download_status
+
+- name: setup proper listening interface for scraping
+  debug:
+    msg: " Host internal IP is : {{hostvars[inventory_hostname]['ansible_igb1']['ipv4'][0]['address']}}"
+          #msg: "IPVRACK result : {{ hostvars.ansible_igb1.ipv4.address }}"
+    #  - debug:
+    #      var: "{{ exporter_install_result }}"
+      #    verbosity: 2
+
+- name: ensure services is enabled in rc.conf
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^{{ item }}.*$'
+    line: '{{ item }}_enable="YES"'
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_items:
+    - "node_exporter"
+    - "{{ exporter_file }}"
+
+- name: copy exporter template
+  template:
+    src: "../templates/{{ansible_system|lower}}/{{ item.src }}.j2"
+    dest: "/usr/local/etc/rc.d/{{ item.dest }}"
+    mode: "u+rwx"
+    backup: True
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_items:
+    - { name: "{{ exporter_file}}", src: "exporter_template", dest: "{{exporter_file}}" }
+
+- name: remove quotes -- bug between rc.d scripting and jinja2 templates
+  replace:
+    path: "/usr/local/etc/rc.d/{{ item }}"
+    regexp: "'{{ item }}'"
+    replace: "{{ item }}"
+    backup: True
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_items:
+    - node_exporter
+    - "{{ exporter_file }}"
+
+- name: check listen directive for haproxy nodes
+  replace:
+    path: "/usr/local/etc/rc.d/{{ exporter_file }}"
+    regexp: "-web.listen-address"
+    replace: "--web.listen-address"
+  when: "inventory_hostname in groups['haproxy']"
+
+- name: setup exporter link for use in $PATH
+  copy:
+    src: "/opt/{{exporter_file}}/{{ exporter_file }}"
+    dest: "/usr/local/bin/{{ exporter_file }}"
+    mode: '0755'
+    remote_src: True
+
+
+- name: remove gnutar
+  pkgng:
+    name: gtar
+    state: absent
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+
+- name: start services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - node_exporter
+    - "{{ exporter_file }}"
+  when: ansible_distribution == 'FreeBSD' and 'prometheus' not in inventory_hostname
+
+      #- name: restart prom server
+      #  service:
+      #    name: prometheus
+      #    state: reloaded
+        #run_once: true
+        #delegate_to: "{{ prometheus_server #}}"

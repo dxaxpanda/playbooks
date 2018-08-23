@@ -1,0 +1,64 @@
+---
+- name: get current ESP partition
+  shell: df | awk '$6 == "/boot/efi" {print $1}'
+  register: boot_partition
+
+- debug:
+    var: boot_partition
+    
+- name: fetch UUIDs
+  shell: lsblk /dev/sda1 -i -o name,uuid |sed -e '1d' | awk '{print $2}'
+  register: sda_uuid
+- debug:
+    var: sda_uuid 
+- name: fetch UUIDs
+  shell: lsblk /dev/sdb1 -i -o name,uuid |sed -e '1d' | awk '{print $2}'
+  register: sdb_uuid
+- debug:
+    var: sdb_uuid 
+
+- name: umount partition registered
+  mount:
+    path: "{{ boot_partition.stdout }}"
+    state: unmounted
+- name: mount second boot partition
+  mount:
+    path: /boot/efi
+    src: "UUID={{ sdb_uuid.stdout }}"
+    state: present 
+    fstype: vfat
+  when: boot_partition.stdout == '/dev/sda1'
+
+- name: mount second boot partition
+  mount:
+    path: /boot/efi
+    src: "UUID={{ sda_uuid.stdout }}"
+    state: present
+    fstype: vfat
+  when: boot_partition.stdout == "/dev/sdb1"
+
+- name: check fstab is properly written
+  lineinfile: 
+    path: /etc/fstab
+    regexp: '^UUID={{item}}\s'
+    line: '# UUID={{item}} /boot/efi vfat umask=0077 0 1'
+    state: present
+  with_items:
+    - "{{sda_uuid.stdout}}"
+    - "{{sdb_uuid.stdout}}"
+- name: launch grub_install
+  command: grub-install /dev/sda1
+  when: boot_partition.stdout == "/dev/sdb1"
+  register: grub_output
+
+- name: show debug
+  debug:
+    var: grub_output
+- name: launch grub_install
+  command: grub-install /dev/sdb1
+  when: boot_partition.stdout == "/dev/sda1"
+  register: grub_output
+
+- name: show debug
+  debug:
+    var: grub_output

@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - { role: reallyenglish.redhat-repo}
+    - { role: reallyenglish.nsd }
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: restart nsd service
+      service:
+        name: nsd
+        state: restarted

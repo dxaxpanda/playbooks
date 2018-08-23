@@ -1,0 +1,10 @@
+---
+apt_base_packages: ['apt-transport-https']
+yum_base_packages: []
+kubernetes_packages: ['kubelet', 'kubeadm', 'kubectl']
+kubernetes_yum_repo_url: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+kubernetes_apt_repo_url: "https://apt.kubernetes.io/"
+selinux_state: 'permissive'
+selinux_policy: 'targeted'
+kubernetes_firewall_rules: ['6443', '2379-2380', '10250', '10251', '10252', '10255', '30000-32767']
+

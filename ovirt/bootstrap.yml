@@ -1,0 +1,10 @@
+---
+- name: check if python is installed
+  raw: yum list "{{ python }}"
+  register: result
+
+  name: bootstrap python
+  raw: yum install -y "{{ python }}"
+  when: result != 0
+  #notify:
+  #  - update_cache: yes

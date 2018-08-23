@@ -1,0 +1,27 @@
+---
+# Firewall configuration.
+firewall_allowed_tcp_ports:
+  - 22
+  # For Gluster.
+  - 111
+  # Port-mapper for Gluster 3.4+.
+  - 2049
+  # Gluster Daemon.
+  - 24007
+  # 24009+ for Gluster &lt;= 3.3; 49152+ for Gluster 3.4+.
+  - 49152
+  - 49153
+  # Gluster inline NFS server.
+  - 38465
+  - 38466
+firewall_allowed_udp_ports:
+  - 111
+
+# Gluster configuration.
+gluster_mount_dir: /mnt/swarm
+gluster_brick_dir: /bricks/data
+gluster_brick_name: swarm
+confs_files: ['etc/hosts.j2', 're']
+ca_file: etc/ssl/script/certs/glusterfs.ca
+gluster_nodes: ['newyork', 'dallas', 'toronto']
+pki_files: [ '/etc/ssl/glusterfs.key', '/etc/ssl/glusterfs.pem', '/etc/ssl/glusterfs.ca' ]

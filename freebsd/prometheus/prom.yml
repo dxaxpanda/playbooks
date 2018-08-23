@@ -1,0 +1,60 @@
+---
+  - hosts: "{{ target }}"
+    become: true
+
+    vars:
+      ports: 'sysutils/node_exporter'
+
+      scrape: 5s
+      evaluation: 5s
+
+      prometheus_hosts:
+      prometheus_server: prometheus-preprod
+
+    tasks:
+
+      - name: setup ports
+        raw: /usr/sbin/portsnap fetch extract
+        register: portsnap_result
+
+      - name: install required ports
+        portinstall:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - "{{ ports }}"
+        when: ansible_distribution == 'FreeBSD'
+        register: exporter_install_result
+
+      - debug:
+          msg: "Exporter install result : {{ exporter_install_result }}"
+
+    #  - debug:
+    #      var: "{{ exporter_install_result }}"
+      #    verbosity: 2
+
+      - name: ensure service is enabled in rc.conf
+        lineinfile:
+          path: /etc/rc.conf
+          regexp: '^node_exporter.*$'
+          line: 'node_exporter_enable="YES"'
+        when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+
+      - name: update prometheus configuration file
+        template:
+          src: templates/prometheus.yml.j2
+          dest: /usr/local/etc/prometheus.yml
+          backup: yes
+        
+
+      - name: start services
+        service:
+          name: node_exporter
+          state: reloaded
+        when: ansible_distribution == 'FreeBSD' and 'prometheus' not in inventory_hostname
+
+      - name: restart prom server
+        service:
+          name: prometheus
+          state: reloaded
+        delegate_to: "{{ prometheus_server }}"

@@ -1,0 +1,77 @@
+---
+  hosts: all
+  become: true
+  vars:
+    - packages: [ 'epel-release', 'sshpass', 'httpd', 'git', 'vim',  ]
+    - welcome_file: [ '/etc/httpd/conf.d/welcome.conf' ]
+    - user: [ 'vagrant' ]
+    - httpd_user: [ 'www' ]
+    - packer_dir: [ '~/packer' ]
+    - directories: [ '~/packer', '~/packer-templates/{iso,scripts,templates' ] # '~/packer-templates/scripts', '~/packer-templates/' ]
+    - packer_templates: [ '~/packer-templates' ]
+    - box_files: [ '/var/www/html/box-files' ]
+    - packer_version: [ '1.0.0' ]
+    - packer_url: [ 'https://releases.hashicorp.com/packer/{{ packer_version }}/{{ packer_zip }}' ]
+    - packer_zip: [ 'packer_1.0.0_linux_amd64.zip' ]
+    - packer_checksum: [ 'ed697ace39f8bb7bf6ccd78e21b2075f53c0f23cdfb5276c380a053a7b906853' ]
+  tasks:
+
+    - include: bootstrap.yml
+    - name: installation des prérequis, bootstrap packer
+      yum:
+        name: "{{ item }}"
+        state: latest
+        with_items:
+         - "{{ packages }}"
+    - name: creation dossiers
+      file:
+        path: "{{ item }}"
+        mode: 0755
+        state: directory
+        with_items:
+          - "{{ packer_templates }}"
+          - "{{ box_files }}"
+          - "{{ directories }}"
+
+    - name: fichier test box
+      file:
+        path: "{{ box_files }}/test-file.txt"
+        mode: 0755
+        owner: "{{ httpd_user }}"
+        group: "{{ httpd_user }}"
+        state: touch
+
+    - name: suppression fichier apache
+      file:
+        path: "{{ welcome_file }}"
+        state: absent
+      notify: httpd started
+
+    - name: téléchargement de packer (checksum sha256)
+      get_url:
+        url: "{{ packer_url }}"
+        dest: "{{ packer_dir }}"
+        checksum: sha256:"{{ packer_checksum }}"
+
+    - name: dézippe de l'archive
+      win_unzip:
+        src: "{{ packer_dir }}/{{ packer_zip }}"
+        dest: "{{ packer_dir }}"
+        creates: " {{ packer_version }}"
+
+    - name: ajout packer binary à /usr/sbin
+      copy:
+        src: "{{ packer_dir }}/packer"
+        dest: /usr/bin
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: 0755
+
+    - name: déploiement du repo git
+      shell: "cd {{ packer_templates }} ; git init"
+
+  handlers:
+    - name: restart apache
+      service:
+        name: httpd
+        state: restarted

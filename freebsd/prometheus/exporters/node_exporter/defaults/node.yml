@@ -1,0 +1,31 @@
+author: prometheus
+exporter_file: node_exporter
+exporter_version: 0.15.1
+exporter_port: 9100
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{ansible_system|lower}}-amd64.tar.gz
+exporter_listen_address: "{{hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address']}}"
+exporter_export_path: "/metrics"
+exporter_args: ""
+
+
+pkgs_freebsd: ['node_exporter', 'gtar', 'git', 'vim-lite']
+pkgs_linux: ['prometheus-node-exporter', 'vim']
+scrape: 5s
+evaluation: 5s
+prometheus_hosts:
+prometheus_server: prometheus-preprod
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'root'
+    mode: '0755'
+    recurse: True
+    state: directory
+  exporter:
+    path: "/opt/{{exporter_file}}"
+    user: 'root'
+    group: 'root'
+    mode: '755'
+    recurse: True
+    state: directory

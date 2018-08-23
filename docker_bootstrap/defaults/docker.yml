@@ -1,0 +1,30 @@
+---
+redhat_packages: ['wget', 'docker-ce', 'git', 'net-tools', 'bind-utils', 'iptables-services', 'bridge-utils', 'bash-completion', 'epel-release', 'sudo', 'vim', 'libselinux-python', 'yum-utils', 'device-mapper-persistent-data', 'lvm2' ]
+docker_users: ['kraken', 'jmirre']
+debian_packages: ['apt-transport-https', 'ca-certificates', 'htop', 'curl', 'gnupg2', 'software-properties-common']
+selinux_state: enforcing
+selinux_policy: targeted
+DOCKER_DEBIAN_GPG_KEY: '9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88'
+DOCKER_GPG_KEY: '060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35'
+DOCKER_REPO_URL:  'https://download.docker.com/linux/centos/docker-ce.repo'
+docker_vg: docker
+conf_files: ['etc/lvm/profile/docker-thinpool.profile', 'etc/docker/daemon.json' ]
+docker_dir: /var/lib/docker
+#pvs_disk: /dev/vdb
+pvs_disk: /dev/md127
+
+compose_url: "https://github.com/docker/compose/releases/download/{{compose_version}}/docker-compose-{{ansible_system}}-{{ansible_architecture}}"
+compose_version: '1.19.0'
+compose_checksum_sha256: 'sha256:78734996d716113f9f9716d0b5064166e9475835e5000fd01b0480d19e1f7372'
+compose_path: '/usr/local/bin/docker-compose'
+
+docker_volumes:
+  - name: thinpool
+    size: 95%VG
+    opts: --wipesignatures y
+    path: "/dev/{{docker_vg}}/thinpool"
+
+  - name: thinpoolmeta
+    size: 1%VG
+    opts: --wipesignatures y
+    path: "/dev/{{docker_vg}}/thinpoolmeta"

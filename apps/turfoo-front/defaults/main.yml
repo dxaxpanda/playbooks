@@ -1,0 +1,64 @@
+---
+docker_client_ua: 'Docker-Client/17.12.0-ce (linux)'
+debian_packages: ['nfs-common']
+application: 'turfoo-front'
+#registries:
+#  nexus:
+#    host: nexus
+#    username: packages
+#    password: pass
+#    email: <email>
+#    state: present
+#
+app_dirs:
+  main:
+    app_path: /home/windataco/turfoo-front
+    app_uid: kraken
+    app_gid: www-data
+    app_dir_mode: 775
+    state: directory
+  shared_dir:
+    app_path: /home/windataco/turfoo-front/shared
+    app_uid: kraken
+    app_gid: www-data
+    app_dir_mode: 775
+    state: directory
+  env:
+    app_path: /home/windataco/turfoo-front/shared/.env
+    app_uid: kraken
+    app_gid: www-data
+    app_dir_mode: 775
+    state: touch
+  auth:
+    app_path: /home/windataco/turfoo-front/shared/auth.htpasswd
+    app_uid: kraken
+    app_gid: www-data
+    app_dir_mode: 775
+    state: touch 
+  ftp_data:
+    app_path: /home/data/turfoo
+    app_uid: 80
+    app_gid: 14
+    app_dir_mode: 775
+    state: directory
+  ftp_gif:
+    app_path: /home/web/ftp/www.turfoo.fr-flux
+    app_uid: 14
+    app_gid: 14
+    app_dir_mode: 775
+    state: directory
+
+mounts:
+  ftp_data:
+    path: /home/data/turfoo
+    src: '10.16.100.140:/zpool-124171/WWWSTATIC/turfoo'
+    fstype: nfs
+    opts: rw,rsize=65535,wsize=65535
+    state: mounted 
+  ftp_gif:
+    path: /home/web/ftp/www.turfoo.fr-flux
+    src: '10.16.100.140:/zpool-124171/STFEEDS/turfoo'
+    fstype: nfs
+    opts: rw,rsize=65535,wsize=65535
+    state: mounted
+

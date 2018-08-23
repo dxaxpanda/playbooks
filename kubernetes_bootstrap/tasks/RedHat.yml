@@ -1,0 +1,46 @@
+---
+- name: ensure SELINUX is disabled
+  selinux:
+    policy: "{{ selinux_policy }}"
+    state: "{{ selinux_state }}"
+
+- name: setup repo files
+  template:
+    src: "../templates/{{item}}.j2"
+    dest: "/etc/yum.repos.d/{{item}}"
+  with_items:
+      - "kubernetes_yum.repo" 
+
+- name: download kubernetes packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - "{{ kubernetes_packages }}"
+
+- name: check cgroup driver
+  replace:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    regexp: "cgroup-driver=systemd"
+    replace: "cgroup-driver=cgroupfs"
+
+- name: setup firewall rules
+  firewalld: 
+    port: "{{ item }}/tcp" 
+    zone: public
+    permanent: true
+    state: enabled
+  with_items:
+    - "{{ kubernetes_firewall_rules }}"
+
+- name: ensure docker is enabled
+  service:
+    name: docker
+    state: started
+- name: run docker info to ensure everything is in place
+  command: docker info
+  register: docker
+
+- debug:
+    msg: " Docker info result : {{ docker.stdout }}"

@@ -1,0 +1,13 @@
+---
+- name: add users
+  user:
+    name: "{{ item.key }}"
+    groups: "{{ item.value.groups }}"
+  with_dict: "{{ users }}"
+
+- name: setup key files
+  authorized_key:
+    user: "{{ item.key }}"
+    state: present
+    key: "{{ item.value.key}}"
+  with_dict: "{{ users }}"

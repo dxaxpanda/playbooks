@@ -1,0 +1,28 @@
+# file: /etc/jail.conf
+# Defaults
+#exec.prestart = "/sbin/mount -t nullfs -o ro /usr/ports/ /usr/jail/$name/usr/ports";
+exec.start = "/bin/sh /etc/rc";
+exec.stop = "/bin/sh /etc/rc.shutdown";
+#exec.poststop = "/sbin/umount -f /jails/$name/repos/dev01";
+#exec.clean;
+mount.devfs;
+mount.fstab = "/etc/fstab.$name";
+host.hostname = "$name.sportytrader.com";
+allow.nomount;
+
+# Dynamic wildcard parameter:
+# Base the path off the jail name.
+path = "/jails/$name";
+
+# example {
+#  interface = "lo0";
+#  ip4.addr = 127.0.0.2;
+#  }
+{% for item in jails %}
+{{item.jail_name}} {
+        persist;
+        ip4=inherit;
+        mount.devfs;
+        mount.fdescfs;
+}
+{% endfor %}

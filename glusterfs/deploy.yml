@@ -1,0 +1,273 @@
+---
+- hosts: all
+  sudo: yes
+  #gather_facts: yes
+
+  vars_files:
+    - vars.yml
+
+  roles:
+    - geerlingguy.firewall
+    - geerlingguy.glusterfs
+
+  tasks:
+
+    - name: stop firewall
+      service:
+        name: firewalld
+        state: stopped
+
+    - name: change hostname
+      hostname:
+        name: glusterfs-newyork.qwirk
+      when: "'172.10.10.30' in inventory_hostname"
+    - name: change hostname
+      hostname:
+        name: glusterfs-dallas.qwirk
+      when: "'172.10.10.31' in inventory_hostname"
+
+    - name: change hostname
+      hostname:
+        name: glusterfs-toronto.qwirk
+      when: "'172.10.10.32' in inventory_hostname"
+
+
+    - name: install missing packages
+      yum:
+        name: 'glusterfs-*'
+        state: latest
+        update_cache: yes
+    - name: Ensure Gluster brick and mount directories exist.
+      file: "path={{ item }} state=directory mode=0775"
+      with_items:
+        - "{{ gluster_brick_dir }}"
+        - "{{ gluster_mount_dir }}"
+        - /etc/ssl/script
+
+    - name: bootstrap /etc/hosts file
+      template:
+        src: etc/hosts.j2
+        dest: /etc/hosts
+        backup: yes
+
+
+        ## steps to enable TLS
+
+
+    - name: unmount all volumes to enable configurations
+      mount:
+        name: "{{ gluster_mount_dir }}"
+        #src: "{{ inventory_hostname }}:/{{ gluster_brick_name }}"
+        src: "{{ ansible_hostname }}:/{{ gluster_brick_name }}"
+        fstype: glusterfs
+        state: unmounted
+
+  #  - name: execute script for TLS
+  #    copy:
+  #      src: etc/ssl/script/script.sh
+  #      dest: /etc/ssl/script/script.sh
+  #      owner: root
+  #      group: root
+  #      mode: 0755
+
+  #  - name: launch script
+  #    shell: /etc/ssl/script/script.sh
+
+    - name: remove existing pki
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ pki_files }}"
+
+    - name: copy new pki files
+      copy:
+        src: "etc/ssl/script/certs/{{ ansible_hostname }}/{{ item }}"
+        dest: /etc/ssl/
+      with_items:
+        - glusterfs.key
+        - glusterfs.pem
+      when: "'newyork' in ansible_hostname"
+
+
+    - name: copy new pki files
+      copy:
+        src: "etc/ssl/script/certs/{{ ansible_hostname }}/{{ item }}"
+        dest: /etc/ssl/
+      with_items:
+        - glusterfs.key
+        - glusterfs.pem
+      when: "'dallas' in ansible_hostname"
+
+
+    - name: copy new pki files
+      copy:
+        src: "etc/ssl/script/certs/{{ ansible_hostname }}/{{ item }}"
+        dest: /etc/ssl/
+      with_items:
+        - glusterfs.key
+        - glusterfs.pem
+      when: "'toronto' in ansible_hostname"
+
+
+    - name: COPY files to certs library
+      copy:
+        src: "{{ ca_file }}"
+        dest: /etc/ssl/glusterfs.ca
+
+    - name: ensure deletion of glusterfs file to disable TLS
+      file:
+        path: /var/lib/glusterd/secure-access
+        state: absent
+
+    - name: restart glusterd
+      service:
+        name: glusterd
+        state: restarted
+
+  #  - name: Configure Gluster volume.
+  #    gluster_volume:
+  #      state: absent
+  #      name: "{{ gluster_brick_name }}"
+  #      force: yes
+  #    run_once: true
+
+    - name: Configure Gluster volume.
+      gluster_volume:
+        state: present
+        name: "{{ gluster_brick_name }}"
+        brick: "{{ gluster_brick_dir }}"
+        replicas: 3
+        cluster: "{{ groups.gluster | join(',') }}"
+        host: "{{ ansible_hostname }}"
+        force: yes
+      run_once: true
+
+    - name: allow TLS for gluster volume
+    #  command: gluster volume set "{{ gluster_brick_name }}" auth.ssl-allow 'newyork,dallas,toronto'
+      command: gluster volume set "{{ gluster_brick_name }}" auth.ssl-allow '*'
+      run_once: true
+
+
+    - name: allow TLS for clients
+      command: gluster volume set "{{ gluster_brick_name }}" client.ssl on
+      run_once: true
+
+
+    - name: allow TLS for servers
+      command: gluster volume set "{{ gluster_brick_name }}" server.ssl on
+      run_once: true
+
+    - name: stop glusterfs
+      service:
+        name: glusterd
+        state: stopped
+
+    - name: touch glusterfs file to enable TLS
+      file:
+        path: /var/lib/glusterd/secure-access
+        state: touch
+
+    - name: start glusterfs
+      service:
+        name: glusterd
+        state: started
+
+
+
+    - name: start Gluster volume.
+      gluster_volume:
+        state: started
+        name: "{{ gluster_brick_name }}"
+        brick: "{{ gluster_brick_dir }}"
+        force: yes
+      run_once: true
+
+    - name: stop gluster volume
+      gluster_volume:
+        state: stopped
+        name: "{{ gluster_brick_name }}"
+        force: yes
+      run_once: true
+    - name: stop glusterd
+      service:
+        name: glusterd
+        state: stopped
+
+    - name: start glusterd
+      service:
+        name: glusterd
+        state: started
+
+    - name: restart gluster volume
+      gluster_volume:
+        state: started
+        name: "{{ gluster_brick_name }}"
+        force: yes
+      run_once: true
+    - name: Ensure Gluster volume is mounted.
+      mount:
+        name: "{{ gluster_mount_dir }}"
+        src: "{{ ansible_hostname }}:/{{ gluster_brick_name }}"
+        #src: "localhost:/{{ gluster_brick_name }}"
+        fstype: glusterfs
+        opts: "defaults,_netdev"
+        state: mounted
+
+## steps to enable TLS
+
+#    - name: execute script for TLS
+#      script: etc/ssl/script.sh
+#
+#    - name: COPY files to certs library
+#      copy:
+#        src: "{{ ca_file }}"
+#        dest: /etc/ssl/glusterfs.ca
+#        remote_src: true
+#
+#    - name: touch glusterfs file to enable TLS
+#      file:
+#        path: /var/lib/glusterd/secure-access
+#        state: touch
+
+  #  - name: stop gluster volume
+#      gluster_volume:
+#        state: stopped
+#        name: "{{ gluster_brick_name }}"
+#
+#    - name: unmount all volumes to enable configurations
+#      mount:
+#        name: "{{ gluster_mount_dir }}"
+#        #src: "{{ inventory_hostname }}:/{{ gluster_brick_name }}"
+#        src: "localhost:/{{ gluster_brick_name }}"
+#        fstype: glusterfs
+#        state: unmounted
+
+  #  - name: restart glusterfs
+  #    service:
+  #      name: glusterd
+   #      state: restarted
+
+
+
+  #  - name: allow TLS for gluster volume
+  #    command: gluster volume set "{{ gluster_brick_name }}" auth.ssl-allow '*'
+  #  - name: allow TLS for clients
+  #    command: gluster volume set "{{ gluster_brick_name }}" client.ssl on
+#
+#    - name: allow TLS for servers
+#      command: gluster volume set "{{ gluster_brick_name }}" server.ssl on
+#
+#    - name: Restart Gluster volume.
+#      gluster_volume:
+#        state: started
+#        name: "{{ gluster_brick_name }}"
+
+  #  - name: remount volumes to enable configurations
+  #    mount:
+  #      name: "{{ gluster_mount_dir }}"
+  #      #src: "{{ inventory_hostname }}:/{{ gluster_brick_name }}"
+  #      src: "localhost:/{{ gluster_brick_name }}"
+  #      fstype: glusterfs
+  #      opts: "defaults,_netdev"
+  #      state: mounted

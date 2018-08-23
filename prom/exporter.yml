@@ -1,0 +1,21 @@
+---
+  - hosts: "{{ target }}"
+    become: true
+    roles:
+      - { role: bdellegrazie.ansible-role-node_exporter  }
+
+    vars:
+      scrape: 5s
+      evaluation: 5s
+
+      prometheus_hosts:
+      prometheus_server: prometheus-preprod
+
+    tasks:
+
+      - name: debug
+        shell: ls /etc/default/node_exporter
+        register: listing
+
+      - debug:
+          msg: " Showing whats inside directory {{ listing }}"

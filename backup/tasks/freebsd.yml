@@ -1,0 +1,33 @@
+---
+- name: install required packages
+  pkgng:
+    name: "{{ pkgs_freebsd }}"
+    state: present
+
+- name: Setup necessary directories
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "{{ item.value.group}}"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ directories }}"
+
+
+- name: setup backups directories with host available
+  file:front
+    path: "/opt/backup/{{item}}"
+    mode: directory
+    state: present
+  with_items:
+    - "{{ groups['BSD'] }}"
+- name: synchronize remote files
+  synchronize:
+    mode: pull
+    src: "rsync://{{item.0}}/{{item.1}}"
+    dest: "/opt/backup/{{item.0}}"
+    checksum: yes
+  with_items:
+    - "{{ groups['BSD'] }}"
+    - "{{ backup_files }}"
+  #delegate_to: backup_host

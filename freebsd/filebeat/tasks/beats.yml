@@ -1,0 +1,78 @@
+---
+  - hosts: "{{ target }}"
+    become: true
+    gather_facts:
+
+    vars:
+      - os_version: freebsd
+      #- os_version: linux
+    vars_files:
+      - vars_file.yml
+    tasks:
+      - name: install required pkgs|FREEBSD
+        pkgng:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - "{{ pkgs_freebsd }}"
+        when: ansible_distribution == 'FreeBSD'
+
+        register: install_result
+      - name: install required pkgs|Debian
+        apt:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - "{{ pkgs_linux }}"
+        when: ansible_distribution == 'Debian'
+
+      - name: install required pkgs|Redhat
+        yum:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - "{{ pkgs_linux }}"
+        when: ansible_distribution == 'RedHat'
+
+
+    #  - debug:
+    #      msg: "Exporter install result : {{ install_result }}"
+
+      - name: check dict values
+        debug:
+          msg: "{{ item.name }}: {{ item.type }}"
+        with_items: "{{logs_path}}"
+
+      - name: copy filebeat template
+        template:
+          src: templates/filebeat.yml.j2
+          dest: "/usr/local/etc/filebeat.yml"
+          backup: True
+        when: ansible_distribution == 'FreeBSD'
+
+      - name: setup tls directory
+        file:
+          path: '/etc/pki/tls/logstash'
+          state: directory
+
+      - name: add logstash forwarder cert
+        copy:
+          src: 'tls/certs/logstash_forwarder.crt'
+          dest: "{{ logstash_forwarder_ssl_certificate }}"
+
+      - name: ensure services is enabled in rc.conf
+        lineinfile:
+          path: /etc/rc.conf
+          regexp: '^{{ item }}.*$'
+          line: '{{ item }}_enable="YES"'
+        when: "ansible_distribution == 'FreeBSD'"
+        with_items:
+          - "{{ services }}"
+
+      - name: start services
+        service:
+          name: "{{ item }}"
+          state: restarted
+        with_items:
+          - filebeat
+        when: ansible_distribution == 'FreeBSD'

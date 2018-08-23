@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: yes
+ 
+  vars:
+          - dependancies: [ 'python2', 'python2-dnf', 'libselinux-python' ]
+  tasks:
+          - name: premiere tache  bootstrap python2.7
+            raw: yum update -y ; yum install -y python2 python2-yum libselinux-python
+                        
+          - name: ensuite on check la date du serveur
+            shell: date
+            register: sortie
+
+

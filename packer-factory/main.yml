@@ -1,0 +1,53 @@
+---
+- hosts: "{{ target }}"
+  become: True
+  vars_files:
+    - vars.yml
+  roles:
+    - reallyenglish.virtualbox
+  tasks:
+    - name: installation des prérequis Centos, bootstrap packer
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ centos_packages }}"
+      when: ansible_distribution == "CentOS"
+    - name: installation des prérequis Ubuntu, bootstrap packer
+      apt:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ ubuntu_packages }}"
+      when: ansible_distribution == "Ubuntu"
+
+
+    - name: creation dossiers
+      file:
+        path: '~/{{ item }}'
+        mode: '0644'
+        state: directory
+      with_items:
+        - "{{ directories }}"
+
+    - name: téléchargement de packer (checksum sha256)
+      get_url:
+        url: "{{ packer_url }}"
+        dest: "{{ packer_dir }}"
+        checksum: sha256:"{{ packer_checksum }}"
+
+    - name: dézippe de l'archive
+      unarchive:
+        src: "{{ packer_dir }}/{{ packer_zip }}"
+        dest: "{{ packer_dir }}"
+        remote_src: True
+    - name: ajout packer binary à /usr/sbin
+      copy:
+        src: "{{ packer_dir }}/packer"
+        dest: /usr/bin
+        owner: "{{ item }}"
+        group: "{{ item }}"
+        mode: '0755'
+        remote_src: True
+      with_items:
+        - "{{ users }}"

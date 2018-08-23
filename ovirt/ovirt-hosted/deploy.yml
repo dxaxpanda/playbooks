@@ -1,0 +1,11 @@
+---
+  host: all
+  become: true
+  vars:
+    - 
+
+  tasks:
+
+    - name: install ovirt-engine appliances
+      yum: "ovirt-engine-*"
+      state: latest

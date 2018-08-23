@@ -1,0 +1,72 @@
+
+host_parameters:
+  - server_hostname: "braga.sportytrader.com"
+    services_enabled: ['sshd', 'jail', 'ntpdate', 'fsck_y', 'zfs', 'local_unbound', 'pf', 'pflog']
+    host_pkgs: ['gtar', 'git', 'vim-lite', 'sudo', 'zsh']
+
+jails_parameters:
+  - jail_name: red11
+    jail_pkgs: ['redis', 'rsync']
+
+  #host_service_started: ['sshd']
+
+#server_hostname: 'braga.sportytrader.com'
+
+services: ['pf', 'sshd', 'ntpdate']
+
+
+timezone: Europe/Paris
+
+conf_files:
+  jails:
+    src: "../templates/{{ansible_system|lower}}/jail.conf.j2"
+    dest: /etc/jail.conf
+  pf:
+    src: "../templates/{{ansible_system|lower}}/pf.conf.j2"
+    dest: /etc/pf.conf
+
+pf_firewall_configuration:
+  options:
+    block_policy: "block policy drop"
+    loginterface: "loginterface $ext_if"
+    interface_limit: "limit states 4000000"
+    skip: "skip on lo0"
+
+
+pkgs_linux: ['prometheus-node-exporter', 'vim']
+
+
+users:
+  user1:
+    name: jmirre
+    shell: /usr/local/bin/zsh
+    groups: wheel
+    comment: 'Jérémy'
+    state: present
+    createhome: True
+    remove: False
+    issystem: False
+    ssh_key_file: '/home/jeremy/.ssh/id_rsa.pub'
+    ssh_key_file_state: present
+    sudo_permission: 'jmirre ALL=(ALL) ALL'
+  user2:
+    name: tony
+    shell: /usr/local/bin/zsh
+    groups: wheel
+    comment: "Tony"
+    state: present
+    createhome: True
+    remove: False
+    issystem: False
+    ssh_key_file: '/home/tony/.ssh/id_rsa.pub'
+    ssh_key_file_state: present
+    sudo_permission: 'tony ALL=(ALL) NOPASSWD: ALL'
+
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'wheel'
+    mode: '0755'
+    recurse: True
+    state: directory

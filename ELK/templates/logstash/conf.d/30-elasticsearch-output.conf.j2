@@ -1,0 +1,15 @@
+output {
+  elasticsearch {
+    manage_template => false
+    index => "%{[@metadata][beat]}-%{+YYYY.MM.dd}"
+    document_type => "%{[@metadata][type]}"
+    hosts => [ "{{ elasticsearch_server_ip }}" ]
+    ssl => true
+    ssl_certificate_verification => false
+    user => "{{ user_credential }}"
+    password => "{{ password_credential }}"
+  }
+
+#file { path => "/var/log/logstash/debug.log" }
+
+}

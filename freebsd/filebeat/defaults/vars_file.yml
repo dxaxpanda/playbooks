@@ -1,0 +1,28 @@
+pkgs_freebsd: ['beats', 'vim-lite']
+services: ['filebeat']
+elasticsearch_server_ip: '51.254.227.149:5044'
+ssl_enabled: 'true'
+logstash_forwarder_ssl_certificate: '/etc/pki/tls/logstash/logstash-forwarder.crt'
+
+logs_path:
+  - name: sportytrader-old
+    log_files: '/var/log/windataco/sportytrader-old/*.log'
+    excludes: '^*.error.*'
+    type: 'apache'
+    service: 'webserver_sporty'
+  - name: sportytrader-front
+    log_files: '/var/log/windataco/sportytrader-front/*.log'
+    excludes: '^*.error.*'
+    type: 'nginx'
+    service: 'webserver_sporty'
+
+
+
+#  sportytrader-bo:
+#    logfiles: '/var/log/windataco/sportytrader-bo/*.log'
+#    excludes: "['^*.error.*']"
+#    type: 'nginx'
+#  das-server:
+#    log_files: '/var/log/windataco/das-server/*.log'
+#    excludes: "['^*.error.*']"
+#    type: 'nginx'

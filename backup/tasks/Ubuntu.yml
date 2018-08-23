@@ -1,0 +1,34 @@
+---
+- name: install required packages
+  apt:
+    name: "{{ pkg_debian }}"
+    state: present
+
+- name: Setup necessary directories
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "{{ item.value.group}}"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ directories }}"
+
+
+- name: setup backups directories with host available
+  file:
+    path: "/opt/backup/{{item}}"
+    state: directory
+  with_items:
+    - "{{ groups['BSD'] }}"
+
+- name: synchronize remote files
+  synchronize:
+    mode: pull
+    src: "rsync://{{hostvars[item.0]/{{item.1}}"
+    dest: "/opt/backup/{{item.3}}"
+    checksum: yes
+  with_items:
+    - "{{ groups['BSD'][ansible_host]}}"
+    - "{{ backup_files }}"
+    - "/opt/backup/{{item.3}}"
+  #delegate_to: backup_host

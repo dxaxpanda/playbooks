@@ -1,0 +1,28 @@
+---
+  - hosts: "{{ target }}"
+    gather_facts: false
+    become: True
+
+    vars_files:
+      - vars.yml
+    pre_tasks:
+      - setup:
+        filter: ansible_*
+    tasks:
+      - name: setup software collection 
+        yum:
+          name: centos-release-scl
+          state: latest
+      - name: install required packages
+        yum:
+          name: "{{ item }}"
+          state: latest
+        with_items:
+          - "{{ packages }}"
+      - name: add packages to path
+        file:
+          src: "/opt/rh/{{ item }}/enable"
+          dest: "/etc/profile.d/{{ item }}.sh"
+          state: link
+        with_items:
+          - "{{ packages }}"

@@ -1,0 +1,7 @@
+---
+- name: create self-signed SSL cert
+  command: openssl req -new -nodes -x509 -subj "/C=FR/ST=Nord/L=Lille/O=IT/CN={{ server_cert_ip }}" -days 3650 -keyout /etc//ssl//nginx/server.key -out /etc/ssl//nginx/server.crt -extensions v3_ca creates=/etc/ssl/nginx/server.crt
+  notify: "restart services"
+- name: create dhparam
+  command:  openssl dhparam -out /etc/ssl/nginx/dhparam.pem 4096
+  notify: "restart services"

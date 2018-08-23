@@ -1,0 +1,21 @@
+---
+- name: update packages
+  yum:
+    name: '*'
+    state: latest
+- name: install required packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+      - "{{ yum_packages }}"
+- name: copy resolv.conf template
+  template:
+    src: templates/etc/resolv.conf.j2
+    dest: /etc/resolv.conf
+- name: bootstrap interface config
+  template:
+    src: "templates/etc/sysconfig/network-scripts/{{item}}.j2"
+    dest: "/etc/sysconfig/network-scripts/{{item}}"
+  with_items:
+    - "{{eth0_confguration_file}}"

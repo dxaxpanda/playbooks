@@ -1,0 +1,36 @@
+[server]
+
+bind-address = {{ inventory_hostname }}
+#server-id = 2
+server-id = {{ range(1, 99999) | random }}
+
+
+[client]
+ssl-ca=/etc/mysql/ssl/ca-cert.pem
+ssl-cert=/etc/mysql/ssl/client-cert.pem
+ssl-key=/etc/mysql/ssl/client-key.pem
+
+
+# this is only for the mysqld standalone daemon
+[mysqld]
+
+ssl
+ssl-ca=/etc/mysql/ssl/ca-cert.pem
+ssl-cert=/etc/mysql/ssl/server-cert.pem
+ssl-key=/etc/mysql/ssl/server-key.pem
+
+
+# this is only for embedded server
+[embedded]
+
+# This group is only read by MariaDB-5.5 servers.
+# If you use the same .cnf file for MariaDB of different versions,
+# use this group for options that older servers don't understand
+[mysqld-5.5]
+
+# These two groups are only read by MariaDB servers, not by MySQL.
+# If you use the same .cnf file for MySQL and MariaDB,
+# you can put MariaDB-only options here
+[mariadb]
+
+[mariadb-5.5]

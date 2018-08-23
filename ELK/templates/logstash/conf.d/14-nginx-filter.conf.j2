@@ -1,0 +1,13 @@
+filter {
+  if [type] in [ "nginx" , "nginx_access" , "nginx-access" ]  {
+    mutate {
+      convert => [ "status","integer" ]
+      convert => [ "size","integer" ]
+      convert => [ "upstreamtime","float" ]
+      remove_field => "message"
+    }
+    geoip {
+        source => "ip"
+    }
+  }
+}

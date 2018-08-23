@@ -1,0 +1,113 @@
+---
+- hosts: all
+  sudo: yes
+  #gather_facts: yes
+
+  vars_files:
+    - vars.yml
+
+
+
+
+  tasks:
+#    - name: download deb files with specific checks (SHA1)
+#      get_url:
+#        url: "{{ item.value.deb_file }}"
+#        dest: /tmp/
+#        checksum: "sha1:{{ lookup('url', item.value.SHA_checksum) }}"
+#      with_dict: "{{ services }}"
+
+    - name: install kibana and elasticsearch repos
+      apt_repository:
+        repo: "{{ elastic_repo }}"
+        state: present
+        filename: 'elastic-repos'
+
+    - name: add key repositories
+      apt_key:
+        url: "{{ elastic_key }}"
+        state: present
+
+    - name: setup java 8 minimum requirement
+      apt_repository:
+        repo: "{{ jessie_backports }}"
+        state: present
+        filename: 'jessie-backports'
+        update_cache: yes
+
+    - name: update
+      apt:
+        name: 'openjdk-8-jdk'
+        state: present
+
+    - name: disable backport jessie-
+      apt_repository:
+        repo: "{{ jessie_backports }}"
+        state: absent
+        update_cache: yes
+
+
+    - name: install other packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        autoclean: yes
+        autoremove: yes
+        update_cache: yes
+      #  default_release: "jessie-backports"
+      with_items:
+        - "{{ packages }}"
+
+    - name: correct default java version
+      alternatives:
+        name: java
+        path: '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java'
+
+    - name: required directories
+      file:
+        path: "{{ item.value.path }}"
+        owner: "{{ item.value.owner }}"
+        group: "{{ item.value.group }}"
+        mode: "{{ item.value.mode }}"
+        state: "{{ item.value.state }}"
+      with_dict: "{{ directories }}"
+
+
+    - name: setup templates
+      template:
+        src: "{{ item.0 }}"
+        dest: "{{ item.1 }}"
+        backup: yes
+      with_together:
+        - ["{{ nginx_conf }}", "{{ elasticsearch_conf }}", "{{ kibana_conf }}"]
+        - ['/etc/nginx/conf.d/default.conf', '/etc/elasticsearch/elasticsearch.conf', '/etc/kibana/kibana.yml']
+
+    - name: start and enable services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items:
+        - nginx
+        - elasticsearch
+        - kibana
+
+    - include: ../openssl/openssl.yml
+
+  handlers:
+    - name: restart services
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - nginx
+        - elasticsearch
+        - kibana
+      listen: "restart services"
+
+
+
+  #  - name:
+
+      #- name: install package
+  #    when: kibana_results.stat.exists and elasticsearch_results.stat.exists

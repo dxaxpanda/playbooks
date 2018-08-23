@@ -1,0 +1,33 @@
+---
+
+- name: add prerequesites packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - "{{ apt_bae_packages }}"
+- name: setup repo files
+  template:
+    src: "../templates/{{item}}.j2"
+    dest: "/etc/apt/sources.list.d/{{item}}"
+  with_items:
+      - "kubernetes.list" 
+
+- name: download kubernetes packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - "{{ kubernetes_packages }}"
+
+- name: ensure docker is enabled
+  service:
+    name: docker
+    state: started
+- name: run docker info to ensure everything is in place
+  command: docker info
+  register: docker
+
+- debug:
+    msg: " Docker info result : {{ docker.stdout }}"

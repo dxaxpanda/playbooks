@@ -1,0 +1,75 @@
+---
+- name: install required pkgs|Debian
+  yum:
+      name: "{{ item }}"
+      state: present
+  with_items:
+    - "{{ pkgs_linux }}"
+  when: ansible_distribution == 'RedHat'
+  register: install_result
+- debug:
+    msg: "Exporter install result : {{ install_result }}"
+
+
+- name: Setup necessary directories
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "{{ item.value.group}}"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+    recurse: "{{ item.value.recurse }}"
+  with_dict: "{{ directories }}"
+
+- name: download exporter
+  unarchive:
+    src: "{{ exporter_url }}"
+    dest: '/opt/{{ exporter_file }}'
+    owner: 'root'
+    group: 'root'
+    mode: 755
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  register: download_status
+  ignore_errors: True
+
+- name: setup proper listening interface for scraping
+  debug:
+    msg: " Host internal IP is : {{hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address']}}"
+      #msg: "IPVRACK result : {{ hostvars.ansible_igb1.ipv4.address }}"
+#  - debug:
+#      var: "{{ exporter_install_result }}"
+  #    verbosity: 2
+
+- name: setup exporter unit service template
+  template:
+    src: "../templates/RedHat/{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    mode: "u+rwx"
+    backup: True
+  with_items:
+    - { src: "exporter.service.j2", dest: "{{exporter_file}}.service" }
+
+- name: setup environment unit file
+  template:
+    src: "../templates/RedHat/{{ item.src }}"
+    dest: "/etc/default/{{ item.dest }}"
+    mode: "u+rwx"
+    backup: True
+  with_items:
+    - { src: "environment.file.j2", dest: "{{exporter_file}}" }
+
+- name: setup exporter link to path
+  file:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    state: link
+  with_items:
+    - { src: "/opt/{{exporter_file}}/{{exporter_file}}", dest: "/usr/bin/{{exporter_file}}" }
+
+- name: start services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - "{{ exporter_file }}"

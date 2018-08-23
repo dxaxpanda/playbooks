@@ -1,0 +1,46 @@
+#BARCA-SP PF RULES
+#Michael HENNETON
+ext_if="igb0" #
+ext_ip="{{hostvars[inventory_hostname]['ansible_igb0']['ipv4'][0]['address']}}"
+fo_ip="164.132.219.204"                                                                           # IP FailOver Valencia
+int_if="igb1"
+int_ip="{{hostvars[inventory_hostname]['ansible_igb1']['ipv4'][0]['address']}}"                                                                                       # IP LAN vRack
+# tables
+table <fail2ban> persist
+table <badhosts> persist
+
+# options
+{% for item in pf_firewall_configuration.options %}
+set item
+{% endfor %}
+#set limit { states 20000, frags 5000, src-nodes 2000 }
+
+# normalization
+#scrub in all fragment reassemble
+#scrub all reassemble tcp
+#scrub in all random-id
+#scrub in
+
+#
+# rules
+#
+
+# par defaut on loggue et bloque ce qui rentre par $ext_if
+block in log on $ext_if
+# on laiss sortir
+pass out quick
+
+# on laisse l'icmp
+pass in quick on { $ext_if $int_if } inet proto icmp
+# on bloque les vilains
+block quick on $ext_if from <fail2ban>
+block in from <badhosts>
+
+# on laisse tcp/80
+#pass in quick on { $ext_if $int_if } inet proto tcp from any to any port 80
+# AJOUT POUR TEST AVEC VARNISH STV4
+pass in quick on $ext_if inet proto tcp from any to {$ext_ip ,$fo_ip} port {80, 443, 8003, 8004, 8080}
+#pass in quick on $ext_if inet proto tcp from 185.26.126.168  to $fo_ip port 80
+pass in quick on { $ext_if $int_if } inet proto tcp from any to any port {2224, 221, 222}
+#pass in quick on { $ext_if $int_if } inet proto tcp from any to any port {221, 222}
+pass in quick on { $ext_if $int_if } inet proto tcp from any to any port 9000

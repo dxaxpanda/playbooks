@@ -1,0 +1,8 @@
+---
+- hosts: lb
+  vars_files:
+    - vars.yml
+  roles:
+    - wtanaka.haproxy
+
+  tasks:

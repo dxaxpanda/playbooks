@@ -1,0 +1,11 @@
+---
+- hosts: deploy
+#- hosts: "{{ target }}"
+  become: true
+  vars:
+    ruby_install_bundler: true 
+    capistrano_version: '3.6'
+    capistrano_rsync_plugin_version: '1.3.8'
+    capistrano_symfony_plugin_versio: '1.0.0.rc1'
+  roles:
+    - geerlingguy.ruby

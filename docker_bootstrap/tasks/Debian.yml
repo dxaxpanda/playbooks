@@ -1,0 +1,163 @@
+---
+#- name: ensure SELINUX is enabled
+#  selinux:
+#    policy: "{{ selinux_policy }}"
+#    state: "{{ selinux_state }}"
+
+- name: download packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - "{{ debian_packages }}"
+- name: remove existing docker packages
+  apt:
+    name: docker*
+    state: absent
+
+- name: removing docker directories
+  file:
+    path: "{{ docker_dir }}"
+    state: absent
+
+  #- name: setup yum utils
+  # yum:
+  #  name: yum-utils
+  #  state: latest
+- name: debug
+  debug:
+    var: "{{ansible_distribution_file_variety}}"
+- name: add docker gpg key
+  apt_key:
+    url: "https://download.docker.com/linux/{{ ansible_distribution_file_variety|lower }}/gpg"
+    state: present
+- name: add apt repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution_file_variety|lower }} {{ ansible_distribution_release|lower }} stable"
+    state: present
+    filename: 'docker-ce'
+
+
+- name: upgrade all packages
+  apt:
+    name: 'docker-ce'
+    state: latest
+
+
+
+  #  - name: Disable epel globally
+  #    shell: 'sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo'
+
+
+
+
+  #  - name: ensure logical volumes are destroyed
+  #    lvol:
+  #      vg: "{{ docker_vg }}"
+  #      lv: "{{ item.name }}"
+  #      state: absent
+  #      force: yes
+  #    with_items:
+  #      - "{{ docker_volumes }}"
+
+  #  - name: ensure volume group is destroyed
+  #    lvg:
+  #      vg: "{{ docker_vg }}"
+  #      pvs: "{{ pvs_disk }}"
+  #      state: absent
+  #      force: yes
+
+
+  #  - name: setup docker volume group
+  #    lvg:
+  #      vg: "{{ docker_vg }}"
+  #      pvs: "{{ pvs_disk }}"
+  #      pesize: 32
+  #      state: present
+
+
+  #  - name: setup docker logical volume
+  #    lvol:
+  #      vg: "{{ docker_vg }}"
+  #      lv: "{{ item.name }}"
+  #      size: "{{ item.size }}"
+  #      opts: "{{ item.opts }}"
+  #      state: present
+  #      active: true
+  #    with_items:
+  #      - "{{ docker_volumes }}"
+
+  #  - name: docker daemon.json and thin pool profile
+  #    copy:
+  #      src: "{{ item }}"
+  #      dest: "/{{ item }}"
+  #      backup: yes
+  #    with_items:
+  #      - "{{ conf_files}}"
+
+- name: ensure docker directory is created already
+  file:
+    path: /etc/docker
+    state: directory
+
+  #  - name: setup docker logical meta volume
+#      lvol:
+#        vg: "{{ docker_vg }}"
+#        lv: "{{ docker_lv_metathinpool}}"
+#        size: 1%VG
+#        opts: --wipesignatures y
+#        state: present
+#        active: true
+
+- name: stop docker for the following task
+  service:
+    name: docker
+    state: stopped
+
+- name: removing docker directories (ensure a fresh start up)
+  file:
+    path: "{{ docker_dir }}"
+    state: absent
+
+  #  - name: convert docker volumes to thin pool
+  #    shell: "lvconvert -y \
+  #        --zero n \
+  #        -c 512K \
+  #        --thinpool {{ docker_volumes[0].path }} \
+  #        --poolmetadata {{ docker_volumes[1].path }}"
+
+  #  - name: Apply lvm profile using lvchange
+  #    shell: "lvchange --metadataprofile \
+  #    docker-thinpool {{ docker_volumes[0].path }}"
+
+  #  - name: enable monitoring for logical volumes
+  #    command:  lvs -o+seg_monitor
+
+    #- name: mount and edit fstab
+      #      mount:
+      #        path: "{{ mount_point }}"
+      #        src: "{{ source_path }}"
+      #        fstype: "{{ fs_type }}"
+      #        opts: rw
+      #        state: mounted
+
+- name: add special users to group docker
+  user:
+    name: "{{ item }}"
+    group: docker
+    append: yes
+  with_items:
+    - kraken
+    - jmirre
+
+- name: ensure docker is enabled
+  service:
+    name: docker
+    state: started
+- name: run docker info to ensure everything is in place
+  command: docker info
+  register: docker
+
+- debug:
+    msg: " Docker info result : {{ docker.stdout }}"

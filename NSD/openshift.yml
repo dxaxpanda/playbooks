@@ -1,0 +1,18 @@
+---
+nsd_keys:
+  my_tsig_key:
+      ### dd if=/dev/random of=/dev/stdout count=1 bs=32 | base64
+    secret: FwiLuXPSo9LuiMA5m+U4FElz28sg2WYXyE/6VC/JAks=
+    algorithm: hmac-sha256
+nsd_zones:
+  supinfo.local:
+    zonefile: supinfo.local.zone
+    zone: |
+      supinfo.local. 86400 IN SOA master.supinfo.local. admin.supinfo.local. 2017041401 10800 3600 604800 3600
+      supinfo.local. 86400 IN NS master.supinfo.local.
+      supinfo.local. 120 IN A 10.10.0.1
+      ns3071539.ip-37-59-57.eu. 120 IN A 37.59.57.184
+      supinfo.local. 120 IN MX 25 mail.supinfo.local.
+    provide_xfr:
+      - 192.168.133.101 my_tsig_key
+      - 127.0.0.1 NOKEY

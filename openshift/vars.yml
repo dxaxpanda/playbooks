@@ -1,0 +1,5 @@
+---
+packages: ['docker', 'wget', 'git', 'net-tools', 'bind-utils', 'iptables-services, 'bridge-utils', 'bash-completion', 'epel-release', 'sudo', 'vim', 'libselinux-python' ]
+ansible: ['ansible, 'pyOpenSSL']
+selinux_state: enforcing
+selinux_policy: targeted

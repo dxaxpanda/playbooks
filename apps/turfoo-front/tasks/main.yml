@@ -1,0 +1,13 @@
+---
+  - hosts: "{{ target }}"
+    gather_facts: false
+    become: True
+    vars_files:
+      - ../defaults/main.yml
+    pre_tasks:
+      - setup:
+        filter: ansible_*
+    tasks:
+      - name: Distribution related tasks
+        include_tasks: "{{ansible_os_family}}.yml"
+

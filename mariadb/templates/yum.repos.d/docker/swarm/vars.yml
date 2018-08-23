@@ -1,0 +1,7 @@
+---
+packages: ['wget', 'docker-ce', 'git', 'net-tools', 'bind-utils', 'iptables-services', 'bridge-utils', 'bash-completion', 'epel-release', 'sudo', 'vim', 'libselinux-python', 'yum-utils', 'device-mapper-persistent-data', 'lvm2' ]
+selinux_state: enforcing
+selinux_policy: targeted
+DOCKER_GPG_KEY: '060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35'
+DOCKER_REPO_URL:  'https://download.docker.com/linux/centos/docker-ce.repo'
+docker_dir: /var/lib/docker

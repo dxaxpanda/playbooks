@@ -1,0 +1,47 @@
+---
+- hosts: all
+  sudo: yes
+
+  vars_files:
+    - vars.yml
+
+  roles:
+#  - geerlingguy.firewall
+#    - geerlingguy.glusterfs
+
+  tasks:
+
+
+    - name: execute script for TLS
+      copy:
+        src: etc/ssl/script.sh
+        dest: /etc/ssl/script/script.sh
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: launch script
+      shell: /etc/ssl/script/script.sh
+
+    - name: remove existing pki
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ pki_files }}"
+
+    - name: copy new pki files
+      copy:
+        src: "/etc/ssl/script/certs/{{ ansible_hostname }}/{{ item }}"
+        dest: /etc/ssl/
+        remote_src: true
+      with_items:
+        - glusterfs.key
+        - glusterfs.pem
+
+
+    - name: COPY files to certs library
+      copy:
+        src: "{{ ca_file }}"
+        dest: /etc/ssl/glusterfs.ca
+        remote_src: true

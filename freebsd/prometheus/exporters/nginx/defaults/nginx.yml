@@ -1,0 +1,7 @@
+author: discordianfish
+exporter_file: nginx_exporter
+exporter_version: 1.3.2
+exporter_port: 9113
+exporter_url: "https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz"
+exporter_args: ""
+exporter_repo: 'https://github.com/discordianfish/nginx_exporter.git'

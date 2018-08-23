@@ -1,0 +1,103 @@
+---
+- name: bootstrap necessary users
+  user:
+    name: "{{item.value.name}}"
+    shell: "{{item.value.shell}}"
+    groups: "{{item.value.groups}}"
+    comment: "{{item.value.comment}}"
+    state: "{{item.value.state}}"
+    createhome: "{{item.value.createhome}}"
+    remove: "{{item.value.remove}}"
+    system: "{{item.value.issystem}}"
+  with_dict: "{{users}}"
+
+- name: setup key files
+  authorized_key:
+    user: "{{ item.value.name }}"
+    state: "{{ item.value.ssh_key_file_state }}"
+    key: "{{ lookup('file', item.value.ssh_key_file) }}"
+    manage_dir: True
+  with_dict: "{{users}}"
+
+- name: install required pkgs|FREEBSD
+  pkgng:
+    name: "{{ item.1 }}"
+    state: present
+  with_subelements:
+    - "{{ host_parameters }}"
+    - host_pkgs
+  register: install_result
+
+
+- debug:
+  msg: "Exporter install result : {{ install_result }}"
+
+- name: setup sudoer file with proper permission
+  lineinfile:
+    dest: /usr/local/etc/sudoers
+    state: present
+    regexp: '^{{item.value.name}}'
+    line: '{{item.value.sudo_permission}}'
+  with_dict: "{{users}}"
+
+- name: Setup necessary directories/files
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "{{ item.value.group}}"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ directories }}"
+
+- name: setup jail fstab
+  file:
+    path: "/etc/fstab.{{item.0.jail_name}}"
+    state: touch
+  with_items:
+    - "{{jails_parameters}}"
+
+- name: set hostname
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^hostname='
+    line: "hostname=\"{{ host_parameters.0.server_hostname}}\""
+
+- name: ensure services is enabled in rc.conf
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^{{ item.1 }}_*'
+    line: '{{ item.1 }}_enable="YES"'
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_subelements:
+    - "{{ host_parameters }}"
+    - services_enabled
+
+- name: copy templates
+  template:
+    src: "{{item.value.src}}"
+    dest: "{{ item.value.dest }}"
+    mode: "u+rwx"
+    backup: True
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_dict: "{{conf_files}}"
+
+
+- name: remove gnutar
+  pkgng:
+    name: gtar
+    state: absent
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+
+- name: setup proper timezone
+  copy:
+    src: "/usr/share/zoneinfo/{{timezone}}"
+    dest: /etc/localtime
+    remote_src: yes
+
+- name: launch unbound setup
+  command: local-unbound-setup
+  register: unbound_report
+
+- name: show unbound_report
+  debug:
+    var: unbound_report

@@ -1,0 +1,91 @@
+
+- hosts: all
+  sudo: yes
+  #gather_facts: yes
+
+  vars_files:
+    - vars_redhat.yml
+  tasks:
+    - name: Add elastic repo
+      yum_repository:
+        name: elastic
+        description: Some YUM repo
+        baseurl: "{{ elastic_repo }}"
+        gpgkey: "{{ elastic_key }}"
+        gpgcheck: yes
+
+
+#    - name: setup java 8 minimum requirement
+#      apt_repository:
+#        repo: "{{ jessie_backports }}"
+#        state: present
+#        filename: 'jessie-backports'
+#        update_cache: yes
+
+    - name: update
+      yum:
+        name: 'java-1.8.0-openjdk'
+        state: present
+
+    - name: install other packages
+      yum:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - "{{ packages }}"
+
+    - name: add templates
+      template:
+        src: "{{ item.value.origin }}"
+        dest: "{{ item.value.destination }}"
+        backup: yes
+      with_dict: "{{ templates }}"
+
+#
+#    - name: correct default java version
+#      alternatives:
+#        name: java
+#        path: '/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java'
+
+#    - name: required directories
+#      file:
+#        path: "{{ item.value.path }}"
+#        owner: "{{ item.value.owner }}"
+#        group: "{{ item.value.group }}"
+#        mode: "{{ item.value.mode }}"
+#        state: "{{ item.value.state }}"
+#      with_dict: "{{ directories }}"
+
+
+  #  - name: setup templates
+  #    template:
+  #      src: "{{ item.0 }}"
+  #      dest: "{{ item.1 }}"
+  #      backup: yes
+  #    with_together:
+  #      - ["{{ nginx_conf }}", "{{ elasticsearch_conf }}", "{{ kibana_conf }}"]
+  #      - ['/etc/nginx/conf.d/default.conf', '/etc/elasticsearch/elasticsearch.conf', '/etc/kibana/kibana.yml']
+
+    - name: start and enable services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items:
+#        - nginx
+#        - elasticsearch
+        - logstash
+
+  #  - include: ../openssl/openssl.yml
+
+  handlers:
+    - name: restart services
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - logstash
+#        - elasticsearch
+#        - kibana
+      listen: "restart services"

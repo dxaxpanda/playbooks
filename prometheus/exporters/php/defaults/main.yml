@@ -1,0 +1,6 @@
+author: Lusitaniae
+exporter_file: apache_exporter
+exporter_version: 0.4.0
+exporter_port: 9117
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz
+exporter_args: "-scrape_uri 'http://localhost:8080/server-status?auto'"

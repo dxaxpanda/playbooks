@@ -1,0 +1,22 @@
+---
+  - hosts: "{{ target }}"
+    gather_facts: false
+    become: True
+
+    vars_files:
+
+      - ../defaults/node.yml
+    pre_tasks:
+      - setup:
+        filter: ansible_*
+    tasks:
+
+  #    - name: get related variables
+  #      debug:
+  #        var: "{{hostvars[ansible_system]}}"
+  #      register: os
+
+      - name: Distribution related tasks
+        include_tasks: "{{ansible_os_family}}.yml"
+
+    #  - include: ../bootstrap.yml

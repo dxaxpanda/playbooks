@@ -1,0 +1,22 @@
+---
+- hosts: ovh
+  become: root
+
+  vars:
+    packages: [ 'policycoreutils-python', 'net-tools', 'vim', 'git', 'wget', 'kvm', 'libvirt', '*' ]
+    pubkey: "{{ lookup('file', '/home/jmirre/.ssh/id_rsa.pub') }}"
+
+  vars_files:
+    - packer-factory/main.yml
+
+  tasks:
+    - name: install required packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ packages }}"
+
+- include: sshd/main.yml
+- include: packer-factory/main.yml
+- include: ovirt/ovirt.yml

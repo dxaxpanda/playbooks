@@ -1,0 +1,19 @@
+---
+- name: ensure deploy path exists 
+  file:
+    path: "{{ item }}" 
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ web_group }}"
+    mode: 0755
+  with_items:
+    - "{{ deploy_path }}"
+    - "{{ deploy_path }}/{{ deploy_project }}"
+- name: bootstrap deploy user permissions
+  lineinfile:
+    path: "/etc/sudoers.d/{{ deploy_user }}"
+    create: yes
+    state: present
+    regexp: '^kraken\s'
+    line: "{{deploy_user}} ALL = NOPASSWD: {{deploy_user_commands|join(',')}}"
+  

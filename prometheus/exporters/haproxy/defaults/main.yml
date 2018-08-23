@@ -1,0 +1,26 @@
+author: prometheus
+exporter_file: haproxy_exporter
+exporter_version: 0.8.0
+exporter_port: 9101
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{ansible_system|lower}}-amd64.tar.gz
+exporter_args: "--haproxy.scrape-uri=unix:/var/run/haproxy.sock --haproxy.pid-file='/var/run/haproxy.pid'"
+
+pkgs_freebsd: ['node_exporter', 'gtar', 'git', 'vim-lite']
+pkgs_linux: ['prometheus-node-exporter', 'vim']
+
+prometheus_server: prometheus-preprod
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'wheel'
+    mode: '0755'
+    recurse: True
+    state: directory
+  exporter:
+    path: "/opt/{{exporter_file}}"
+    user: 'root'
+    group: 'wheel'
+    mode: '755'
+    recurse: True
+    state: directory

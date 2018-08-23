@@ -1,0 +1,75 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    - packages: [ 'mdadm', 'vim', 'lvm2', 'hdparm', 'xfs-*' ]
+    #- disks: [ '/dev/sdb', '/dev/sdc' ]
+    - md: /dev/md127
+    - volgroup: docker
+    - lvm: data
+    - sizing: 100%FREE
+    - fs_type: xfs
+    - source_path: "/dev/{{ volgroup }}/{{ lvm }}"
+    - mount_point: "/bricks/{{ lvm }}"
+    - directories: [ '/bricks', '/bricks/{{ lvm }}', '/etc/ssl/script' ]
+
+  tasks:
+    - name: prepare packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ packages }}"
+
+    - name: ensure directories exists
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0775
+      with_items:
+        - "{{ directories }}"
+
+    - name: prepare disks
+      script: mdadm.sh
+
+    - name: initialization disque physique
+      lvg:
+        vg: "{{ volgroup }}"
+        pvs: "{{ md }}"
+        state: present
+
+    - name: ensure no lvm
+      lvol:
+        vg: "{{ volgroup }}"
+        lv: "{{ lvm }}"
+        state: absent
+        force: yes
+      register: create
+      ignore_errors: true
+
+    - name: creation lvm
+      lvol:
+        vg: "{{ volgroup }}"
+        lv: "{{ lvm }}"
+        size: "{{ sizing }}"
+        state: present
+        active: true
+      when: create|succeeded
+
+
+
+    - name: create fs
+      filesystem:
+        fstype: "{{ fs_type }}"
+      #  dev: "/dev/{{ volgroup }}/{{ lvm }}
+        dev: "{{ source_path }}"
+
+
+    - name: mount and edit fstab
+      mount:
+        path: "{{ mount_point }}"
+        src: "{{ source_path }}"
+        fstype: "{{ fs_type }}"
+        opts: rw
+        state: mounted

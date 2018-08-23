@@ -1,0 +1,56 @@
+packages: ['vim', 'apt-transport-https', 'openjdk-8-jdk', 'kibana', 'elasticsearch', 'nginx' ]
+
+jessie_backports: 'deb http://http.debian.net/debian jessie-backports main'
+
+elastic_repo: 'deb https://artifacts.elastic.co/packages/5.x/apt stable main'
+elastic_key: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+
+nginx_conf: templates/default.conf.j2
+elasticsearch_conf: templates/elasticsearch.conf.j2
+kibana_conf: templates/kibana.yml.j2
+
+server_cert_ip: 164.132.171.241
+nginx_user: www-data
+directories:
+  nginx_dir:
+    path: /etc/nginx/conf.d
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: 644
+    state: directory
+  kibana_dir:
+    path: /var/run/kibana
+    owner: kibana
+    group: kibana
+    mode: 700
+    state: directory
+  nginx_ssl:
+    path: /etc/ssl/nginx
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: 700
+    state: directory
+
+
+#services:
+#  kibana:
+  #  deb_file: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ version }}-amd64.deb"
+  #  SHA_checksum: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ version }}-amd64.deb.sha1"
+#    sources: 'deb https://artifacts.elastic.co/packages/{{ version }}/apt stable main'
+#    signing_key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+#  elasticsearch:
+    #deb_file: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ version }}.deb"
+    #SHA_checksum: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ version }}.deb.sha1"
+#    sources: 'deb https://artifacts.elastic.co/packages/{{ version }}/apt stable main'
+#    signing_key: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+#deb_packages: ['elasticsearch-{{ version }}.deb', 'kibana-{{ version }}-amd64.deb']
+
+version: 5.5
+
+
+
+
+#elasticsearch_deb: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ version }}.deb"
+#elasticsearch_SHA: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ version }}.deb.sha1"
+#kibana_deb: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ version }}-amd64.deb"
+#kibana_SHA: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ version }}-amd64.deb.sha1"

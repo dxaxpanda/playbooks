@@ -1,0 +1,77 @@
+---
+- hosts: all
+  become: root
+  vars:
+    pubkey: "{{ lookup('file', '/home/jmirre/.ssh/id_rsa.pub') }}"
+    packages: ['policycoreutils-python', 'mosh']
+    sshd_variables:
+      bind_port: 2234
+      passwd_auth_yn: 'no'
+      public_key_auth_yn: 'yes'
+      template_src: "/home/jmirre/ansible/playbooks/sshd/sshd_config.j2"
+      template_dest: "/etc/ssh/sshd_config"
+      selinux_tag: ssh_port_t
+      validate_cmd: /usr/sbin/sshd -t -f %s
+    users:
+      jmirre:
+        name: jmirre
+        shell: /bin/bash
+        state: present
+      root:
+        name: root
+        shell: /bin/bash
+        state: present
+
+  tasks:
+
+    - name: install required packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ packages }}"
+
+    - name: add user jmirre
+      user:
+        name: "{{ item.value.name }}"
+        shell: "{{ item.value.shell }}"
+        state: "{{ item.value.state }}"
+      with_dict: "{{ users }}"
+
+    - name: Set authorized key, not removing all the authorized key already set
+      authorized_key:
+        user: "{{ item.key }}"
+        key: "{{ pubkey }}"
+        state: present
+        exclusive: False
+      with_dict: "{{ users }}"
+
+    - name: sshd template
+      template:
+        src: "{{ sshd_variables.template_src }}"
+        dest: "{{ sshd_variables.template_dest }}"
+        owner: root
+        group: root
+        mode: '0600'
+        validate: "{{ sshd_variables.validate_cmd }}"
+        backup: yes
+
+    - name: change semanage sshd
+      seport:
+        ports: "{{ sshd_variables.bind_port }}"
+        proto: tcp
+        setype: "{{ sshd_variables.selinux_tag }}"
+        state: present
+      notify:
+        - sshd restart
+    - name: change firewalld rule to allow required ports
+      firewalld:
+        port: "{{ sshd_variables.bind_port }}/tcp"
+        permanent: true
+        state: enabled
+        zone: public
+        immediate: yes
+    - name: reload sshd
+      service:
+        name: sshd
+        state: reloaded

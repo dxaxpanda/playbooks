@@ -1,0 +1,23 @@
+---
+  - hosts: "{{ target }}"
+    gather_facts: True
+    become: True
+
+    vars_files:
+
+      - ../defaults/elasticsearch.yml
+    tasks:
+
+      - name: Debian related tasks
+        import_tasks: Debian.yml
+        when: ansible_distribution == 'Debian'
+
+      - name: RedHat related tasks
+        import_tasks: RedHat.yml
+        when: ansible_distribution == 'RedHat'
+
+      - name: FreeBSD related tasks
+        import_tasks: freebsd.yml
+        when: ansible_distribution == 'FreeBSD'
+
+      - include: ../bootstrap.yml

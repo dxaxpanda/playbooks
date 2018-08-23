@@ -1,0 +1,80 @@
+---
+- name: install required pkgs|FREEBSD
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ pkgs_freebsd }}"
+  when: ansible_distribution == 'FreeBSD'
+  register: install_result
+- debug:
+    msg: "Exporter install result : {{ install_result }}"
+
+- name: Setup necessary directories
+  file:
+    path: "{{ item.value.path }}"
+    owner: "{{ item.value.user }}"
+    group: "wheel"
+    mode: "{{ item.value.mode }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ directories }}"
+
+- name: setup proper listening interface for scraping
+  debug:
+    msg: " Host internal IP is : {{hostvars[inventory_hostname]['ansible_igb1']['ipv4'][0]['address']}}"
+      #msg: "IPVRACK result : {{ hostvars.ansible_igb1.ipv4.address }}"
+#  - debug:
+#      var: "{{ exporter_install_result }}"
+  #    verbosity: 2
+
+- name: ensure services is enabled in rc.conf
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^{{ item }}.*$'
+    line: '{{ item }}_enable="YES"'
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_items:
+    - "node_exporter"
+
+- name: copy exporter template
+  template:
+    src: "../templates/freebsd/{{ item.src }}.j2"
+    dest: "/usr/local/etc/rc.d/{{ item.dest }}"
+    mode: "u+rwx"
+    backup: True
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  with_items:
+    - { name: "node_exporter", src: "exporter_template", dest: "node_exporter" }
+
+    #- name: remove quotes -- bug between rc.d scripting and jinja2 templates
+  #        replace:
+  #          path: "/usr/local/etc/rc.d/{{ item }}"
+  #          regexp: "'{{ item }}'"
+  #          replace: "{{ item }}"
+  #          backup: True
+  #        when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  #        with_items:
+  #          - node_exporter
+  #          - "{{ exporter_file }}"
+  #
+  #- name: check listen directive for haproxy nodes
+  #  replace:
+  #    path: "/usr/local/etc/rc.d/{{ exporter_file }}"
+  #    regexp: "-web.listen-address"
+  #    replace: "--web.listen-address"
+  #  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+  #  when: "inventory_hostname in groups['haproxy']"
+
+
+- name: remove gnutar
+  pkgng:
+    name: gtar
+    state: absent
+  when: "'prometheus' not in inventory_hostname and ansible_distribution == 'FreeBSD'"
+
+- name: start services
+  service:
+    name: "node_exporter"
+    state: restarted
+  when: ansible_distribution == 'FreeBSD' and 'prometheus' not in inventory_hostname
+

@@ -1,0 +1,6 @@
+author: prometheus
+exporter_file: haproxy_exporter
+exporter_port: 9101
+exporter_version: 0.8.0
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz
+exporter_args: "--haproxy.scrape-uri=unix:/var/run/haproxy.sock --haproxy.pid-file=/var/run/haproxy.pid"

@@ -1,0 +1,22 @@
+---
+- hosts: ovh
+  become: root
+
+#  vars_files:
+
+  vars:
+    - box_name: [ 'ubuntu/trusty64', 'laravel/homestead', 'hashicorp/precise64', 'centos/7', 'puphpet/ubuntu1404-x64', 'ubuntu/xenial64', 'hashicorp/precise32', 'debian/jessie64', 'scotch/box', 'ubuntu/trusty32' ]
+    - data: /data
+    - wd: "{{ data }}/{{ box_name }}"
+    - vagrant_create: "vagrant up"
+    - vagrant_destroy: "vagrant destroy -f"
+  roles:
+  - andrewrothstein.vagrant
+
+
+#  tasks:
+  tasks:
+
+    - name: boostrap new vagrant folder
+      file:
+        name:

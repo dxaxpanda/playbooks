@@ -1,0 +1,28 @@
+---
+- name: add sury gpg key
+  apt_key:
+    url: "{{ sury_deb_gpg_key }}"
+    state: present
+- name: add sury repo for php71
+  apt_repository:
+    repo: "{{ sury_deb_repo }}"
+    state: present
+    filename: php.list
+
+- name: setup packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - "{{ debian_packages }}"
+- name: get php path
+  command: env
+  register: path 
+- debug:
+    var: path
+
+- name: setup composer binary
+  script: getcomposer.sh
+  args:
+    chdir: /tmp

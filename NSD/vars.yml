@@ -1,0 +1,27 @@
+---
+nsd_keys:
+  my_tsig_key:
+      ### dd if=/dev/random of=/dev/stdout count=1 bs=32 | base64
+    secret: FwiLuXPSo9LuiMA5m+U4FElz28sg2WYXyE/6VC/JAks=
+    algorithm: hmac-sha256
+nsd_zones:
+  qwirk.dc:
+    zonefile: qwirk.dc.zone
+    zone: |
+      qwirk.dc. 86400 IN SOA masterdns.qwirk.dc. admin.qwirk.dc. (
+                                  2017041401 10800 3600 604800 3600 )
+      qwirk.dc. 86400 IN NS masterdns.qwirk.dc.
+      qwirk.dc. 86400 IN NS slavedns.qwirk.dc.
+      qwirk.dc. 120 IN A 172.10.10.1
+      masterdns.qwirk.dc. 120 IN A 172.10.10.15
+      slavedns.qwirk.dc. 120 IN A 172.10.10.25
+      newyork.qwirk.dc. 120 IN A 172.10.10.20
+      dallas.qwirk.dc. 120 IN A 172.10.10.50
+      toronto.qwirk.dc. 120 IN A 172.10.10.100
+      lb1.qwirk.dc 120 IN A 172.10.10.150
+      lb2.qwirk.dc 120 IN A 172.10.10.200
+      lb3.qwirk.dc 120 IN A 172.10.10.250
+      qwirk.dc. 120 IN MX 25 mail.qwirk.dc.
+    provide_xfr:
+      - 192.168.133.101 my_tsig_key
+      - 127.0.0.1 NOKEY

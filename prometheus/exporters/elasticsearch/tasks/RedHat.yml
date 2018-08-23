@@ -1,0 +1,36 @@
+  - name: install required pkgs|Redhat
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - "{{ pkgs_linux }}"
+    when: ansible_distribution == 'RedHat'
+  - debug:
+      msg: "Exporter install result : {{ install_result }}"
+
+
+  - name: Setup necessary directories
+    file:
+      path: "{{ item.value.path }}"
+      owner: "{{ item.value.user }}"
+      group: "{{ item.value.group}}"
+      mode: "{{ item.value.mode }}"
+      state: "{{ item.value.state }}"
+    with_dict: "{{ directories }}"
+
+  - name: download exporter
+    unarchive:
+      src: "{{ exporter_url }}"
+      dest: '/opt/{{ exporter_file }}'
+      remote_src: yes
+      extra_opts: [--strip-components=1]
+    register: download_status
+    ignore_errors: True
+
+  - name: setup proper listening interface for scraping
+    debug:
+      msg: " Host internal IP is : {{hostvars[inventory_hostname]['ansible_eth0']['ipv4'][0]['address']}}"
+      #msg: "IPVRACK result : {{ hostvars.ansible_igb1.ipv4.address }}"
+#  - debug:
+#      var: "{{ exporter_install_result }}"
+  #    verbosity: 2

@@ -1,0 +1,59 @@
+#packages: ['vim', 'apt-transport-https', 'openjdk-8-jdk', 'kibana', 'elasticsearch', 'nginx' ]
+packages: ['vim', 'logstash']
+version: '5.x'
+elastic_repo: 'https://artifacts.elastic.co/packages/5.x/yum'
+elastic_key: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+
+#nginx_conf: templates/default.conf.j2
+#elasticsearch_conf: templates/elasticsearch.conf.j2
+#kibana_conf: templates/kibana.yml.j2
+logstash_conf: ../templates/logstash.yml.j2
+logstash_port: 5044
+logstash_forwarder_cert_path: '/etc/pki/tls/logstash/certs/logstash-forwarder.crt'
+logstash_forwarder_key_path: '/etc/pki/tls/logstash/private/logstash-forwarder.key'
+
+elasticsearch_server_ip: '164.132.171.241:4443'
+#server_cert_ip: 164.132.171.241
+elasticsearch_user_credential: 'el4st1c'
+elasticsearch_password_credential: 'el4st1c'
+
+templates:
+  filebeats:
+    origin: '../templates/logstash/conf.d/02-beats-input.conf.j2'
+    destination: '/etc/logstash/conf.d/02-beats-input.conf'
+  syslog:
+    origin: '../templates/logstash/conf.d/10-syslog-filter.conf.j2'
+    destination: '/etc/logstash/conf.d/10-syslog-filter.conf'
+  apache:
+    origin: ../templates/logstash/conf.d/13-apache-filter.conf.j2
+    destination: /etc/logstash/conf.d/13-apache-filter.conf
+  nginx:
+    origin: ../templates/logstash/conf.d/14-nginx-filter.conf.j2
+    destination: /etc/logstash/conf.d/14-nginx-filter.conf
+  elasticsearch:
+    origin: ../templates/logstash/conf.d/30-elasticsearch-output.conf.j2
+    destination: /etc/logstash/conf.d/30-elasticsearch-output.conf
+  logstash:
+    origin:
+      ../templates/logstash/logstash.yml.j2
+    destination: /etc/logstash/logstash.yml
+
+directories:
+  nginx_dir:
+    path: /etc/nginx/conf.d
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: 644
+    state: directory
+  kibana_dir:
+    path: /var/run/kibana
+    owner: kibana
+    group: kibana
+    mode: 700
+    state: directory
+  nginx_ssl:
+    path: /etc/ssl/nginx
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: 700
+    state: directory

@@ -1,0 +1,31 @@
+author: oliver006 
+exporter_file: redis_exporter
+exporter_version: 0.15.0
+exporter_user: 'nobody'
+exporter_port: 9121
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-v{{exporter_version}}.{{ansible_system|lower}}-amd64.tar.gz
+exporter_listen_address: "{{hostvars[inventory_hostname]['ansible_eno2']['ipv4']['address']}}"
+exporter_export_path: "/metrics"
+exporter_args: ""
+exporter_redis_address: "redis://{{exporter_listen_address}}:{{exporter_redis_port}}"
+exporter_redis_port: 6379 
+
+pkgs_freebsd: ['node_exporter', 'gtar', 'git', 'vim-lite']
+pkgs_debian: ['prometheus-node-exporter', 'unzip', 'vim']
+pkgs_redhat: ['unzip', 'vim']
+
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'root'
+    mode: '0755'
+    recurse: True
+    state: directory
+  exporter:
+    path: /opt/{{exporter_file}}
+    user: 'root'
+    group: 'root'
+    mode: '755'
+    recurse: True
+    state: directory

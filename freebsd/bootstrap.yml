@@ -1,0 +1,3 @@
+---
+- name: bootstrap python
+  raw: sh -c "ASSUME_ALWAYS_YES=yes pkg install python"

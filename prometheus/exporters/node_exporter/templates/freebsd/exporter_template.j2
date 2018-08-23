@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# PROVIDE: '{{item.name}}'
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# '{{item.name}}'_enable (bool):          Set to NO by default.
+#               Set it to YES to enable '{{item.name}}'.
+# '{{item.name}}'_user (string):          Set user that '{{item.name}}' will run under
+#               Default is "nobody".
+# '{{item.name}}'_group (string):         Set group that '{{item.name}}' will run under
+#               Default is "nobody".
+# '{{item.name}}'_args (string):          Set extra arguments to pass to '{{item.name}}'
+#               Default is "".
+# '{{item.name}}'_listen_address (string):Set ip:port that '{{item.name}}' will listen on
+#               Default is ":9100".
+# '{{item.name}}'_textfile_dir (string):  Set directory that '{{item.name}}' will watch
+#               Default is "/var/tmp/'{{item.name}}'".
+
+
+  #REMOVED :
+  #-collector.textfile.directory=${'{{item.name}}'_textfile_dir} \
+. /etc/rc.subr
+
+name='{{item.name}}'
+rcvar='{{item.name}}'_enable
+
+load_rc_config $name
+
+: ${'{{item.name}}'_enable:="NO"}
+: ${'{{item.name}}'_user:="nobody"}
+: ${'{{item.name}}'_group:="nobody"}
+: ${'{{item.name}}'_args:=""}
+: ${'{{item.name}}'_listen_address:="{{hostvars[inventory_hostname]['ansible_igb1']['ipv4'][0]['address']}}:9100"}
+: ${'{{item.name}}'_textfile_dir:="/var/tmp/'{{item.name}}'"}
+
+
+pidfile=/var/run/'{{item.name}}'.pid
+command="/usr/sbin/daemon"
+procname="/usr/local/bin/'{{item.name}}'"
+command_args="-p ${pidfile} /usr/bin/env ${procname} \
+    --web.listen-address=${'{{item.name}}'_listen_address} \
+    ${'{{item.name}}'_args}"
+
+start_precmd='{{item.name}}'_startprecmd
+
+'{{item.name}}'_startprecmd()
+{
+    if [ ! -e ${pidfile} ]; then
+        install -o ${'{{item.name}}'_user} -g ${'{{item.name}}'_group} /dev/null ${pidfile};
+    fi
+    if [ ! -d ${'{{item.name}}'_textfile_dir} ]; then
+        install -d -o ${'{{item.name}}'_user} -g ${'{{item.name}}'_group} -m 1755 ${'{{item.name}}'_textfile_dir}
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

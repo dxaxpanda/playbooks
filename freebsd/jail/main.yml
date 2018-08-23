@@ -1,0 +1,36 @@
+---
+  - hosts: all
+    become: true
+
+    vars_files:
+      - vars.yml
+
+    tasks:
+      - include: ../bootstrap.yml
+
+      - name: ensure jail dataset is present
+        zfs:
+          name: "{{ jails_dataset }}"
+          state: present
+
+      - name: ensure jails datasets are present
+        zfs:
+          name: "{{ jails_dataset }}/{{ item }}"
+          state: present
+        with_items:
+          - "{{ jails_name }}"
+
+      - name: fetch base BSD packages
+        get_url:
+          url: "{{ item }}"
+          dest: "{{ jails_dir }}/{{ base_dir }}"
+        with_items:
+          - "{{ urls }}"
+
+      - name: extract BSD packages into jail directory
+        unarchive:
+          src: "{{ jails_dir }}/{{ item[0] }}"
+          dest: "{{ jails_dir }}/{{ item[1] }}"
+        with_items:
+          - "{{ archives }}"
+          - "{{ jails_name }}"

@@ -1,0 +1,9 @@
+---
+yum_packages: ['vim']
+apt_packages: ['vim']
+ovh_nameserver: "213.186.33.99"
+eth0_ip: "51.254.227.154"
+eth0_netmask: "255.255.255.255"
+eth0_confguration_file: "ifcfg-eth0"
+eth0_mac_addr: "00:50:56:06:a3:30"
+network_gateway: 5.135.138.254

@@ -1,0 +1,19 @@
+pkgs_freebsd: ['node_exporter', 'gtar']
+pkgs_linux: ['node_exporter', 'vim']
+scrape: 5s
+evaluation: 5s
+prometheus_hosts:
+prometheus_server: prometheus-preprod
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'wheel'
+    mode: '0644'
+    state: directory
+  exporter:
+    path: "/opt/{{exporter_file}}"
+    user: 'root'
+    group: 'wheel'
+    mode: '0644'
+    state: directory

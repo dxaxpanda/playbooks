@@ -1,0 +1,11 @@
+author: prometheus
+exporter_file: prometheus_varnish_exporter
+exporter_version: 0.10.0
+exporter_port: 9104
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz
+exporter_args: "-config.my-cnf={{mysql_conf}}"
+mysql_conf: "/home/exporter/.my.cnf"
+exporter_user: 'user'
+exporter_pass: 'pass'
+exporter_mysql_query: "CREATE USER `{{exporter_user}}`@`localhost` IDENTIFIED BY `{{exporter_pass}}`;
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO `{{exporter_user}}`@`localhost`;"

@@ -1,0 +1,11 @@
+---
+mariadb_release: 10.1
+percona_release_version: 0.1
+percona_release_package_version: "{{ percona_release_version }}-3"
+packages: ['mariadb-server', 'MySQL-python', 'galera', 'percona-xtrabackup', 'socat', 'vim']
+TLS_PKI_FILES: etc/ssl/certs
+mysql_dirs: ['/etc/mysql/ssl', '/var/log/mysql']
+hosts: ['172.10.10.50', 'dcnewyork', 'dcdallas', '%', 'dctoronto', '172.10.10.20', '172.10.10.21', '172.10.10.22', '172.10.10.51', '172.10.10.52', '172.10.10.53', '172.10.10.54']
+mysql_replication_user: 'replicator'
+mysql_replication_password: 'password'
+mysql_replication_user_priv: "*.*:REPLICATION SLAVE,REQUIRESSL"

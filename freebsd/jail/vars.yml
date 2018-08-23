@@ -1,0 +1,8 @@
+---
+urls: [ 'https://download.freebsd.org/ftp/releases/amd64/11.0-RELEASE/base.txz', 'https://download.freebsd.org/ftp/releases/amd64/11.0-RELEASE/kernel.txz' ]
+archives: [ 'base.txz', 'kernel.txz' ]
+jails_dataset: zroot/jails
+jails_dir: /jails/
+jails_name: [ 'test1', 'test2' ]
+pkgs: ['gtar', 'sudo']
+ansible_shell_executable: ''

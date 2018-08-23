@@ -1,0 +1,8 @@
+input {
+  beats {
+    port => {{logstash_port}}
+    ssl => true
+    ssl_certificate => "{{logstash_forwarder_cert_path}}"
+    ssl_key => "{{logstash_forwarder_key_path}}"
+  }
+}

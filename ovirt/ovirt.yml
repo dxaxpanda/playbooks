@@ -1,0 +1,39 @@
+---
+- hosts: all
+  become: true
+  vars:
+    - python: python2.7
+    - rpm: http://resources.ovirt.org/pub/yum-repo/ovirt-release41.rpm
+    - packages: [ 'ovirt-engine', 'ovirt-engine-sdk-python', 'libselinux-python']
+    - selinux_state: permissive
+    - answer_file: answers.conf
+
+  tasks:
+  #  - include: bootstrap.yml
+
+    - name: install repo
+      yum:
+        name: "{{ rpm }}"
+        state: present
+        #notify:
+        #- update_cache: yes
+    - name: install ovirt-engine
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ packages }}"
+
+    - name: Disable selinux
+      selinux:
+        policy: targeted
+        state: "{{ selinux_state }}"
+
+    - name: ensure firewalld is started
+      service:
+        name: firewalld
+        state: started
+
+    - name: launch engine-setup with answers
+      command: engine-setup
+      args: "--config-append={{ answer_file }}"

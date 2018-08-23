@@ -1,0 +1,28 @@
+author: Lusitaniae
+exporter_file: apache_exporter
+exporter_version: 0.4.0
+exporter_port: 9117
+exporter_url: https://github.com/{{author}}/{{exporter_file}}/releases/download/v{{exporter_version}}/{{exporter_file}}-{{exporter_version}}.{{os_version}}-amd64.tar.gz
+exporter_args: "-scrape_uri 'http://localhost:8080/server-status?auto' -telemetry.address '{{hostvars[inventory_hostname]['ansible_igb1']['ipv4'][0]['address']}}' "
+
+pkgs_freebsd: ['node_exporter', 'gtar', 'git', 'vim-lite']
+pkgs_linux: ['prometheus-node-exporter', 'vim']
+scrape: 5s
+evaluation: 5s
+prometheus_hosts:
+prometheus_server: prometheus-preprod
+directories:
+  optional:
+    path: '/opt'
+    user: 'root'
+    group: 'root'
+    mode: '0755'
+    recurse: True
+    state: directory
+  exporter:
+    path: "/opt/{{exporter_file}}"
+    user: 'prometheus'
+    group: 'prometheus'
+    mode: '755'
+    recurse: True
+    state: directory

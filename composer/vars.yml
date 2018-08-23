@@ -1,0 +1,5 @@
+---
+packages: ['rh-php71', 'rh-php71-php-pdo','rh-php71-php-mbstring']
+debian_packages: ['php7.1-xml', 'php7.1-curl', 'php7.1', 'php7.1-pdo', 'php7.1-mbstring']
+sury_deb_repo: "deb https://packages.sury.org/php/ {{ ansible_distribution_release}} main"
+sury_deb_gpg_key: 'https://packages.sury.org/php/apt.gpg'

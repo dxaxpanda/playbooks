@@ -1,0 +1,16 @@
+---
+  - hosts: all
+
+    vars_files:
+      - vars.yml
+
+    tasks:
+      - include: ../bootstrap.yml
+
+      - name: Installation des paquets
+        pkgng:
+          name: {{ item }}
+          state: present
+        with_items:
+          - {{ php_mod }}
+          - {{ pkg_list }}

@@ -1,0 +1,59 @@
+---
+- hosts: all
+  vars_files:
+    - vars.yml
+  tasks:
+
+
+    - name: ensure SELINUX is enabled
+      selinux:
+        policy: "{{ selinux_policy }}"
+        state: "{{ selinux_state }}"
+
+    - name: update repos cache
+      yum:
+        update_cache:
+
+    - name: download packages
+      yum:
+        name: "{{ packages }}"
+        state: latest
+
+    - name: upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name:
+    - name: Disable epel globally
+      shell: 'sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo'
+
+    - name: install ansible packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      enablerepo: epel
+      with_items:
+        - "{{ ansible }}"
+
+    - name: clone ansible ORIGIN git repo
+      git:
+        repo: "{{ origin_git_repo }}"
+        dest: "{{ origin_dir }}"
+        clone: yes
+
+    - name: modification du insecure registry
+      shell: sed -i '/OPTIONS=.*/c\OPTIONS="--selinux-enabled --insecure-registry 172.30.0.0/16"' /etc/sysconfig/docker
+
+    - name: configure docker LV
+       copy:
+         src: docker-storage-setup
+         dest: /etc/sysconfig/docker-storage-setup
+         owner: root
+         group: root
+         mode: 0644
+         backup: yes
+    - name: setup docker storage volume
+      shell: docker-storage-setup
+
+- include: NSD/nsd.yml

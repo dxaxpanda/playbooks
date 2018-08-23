@@ -1,0 +1,48 @@
+---
+- hosts: "{{ target }}"
+  become: true
+  vars:
+    #zfs_dataset: ['zrootROOT', 'zroot/ROOT/default', 'zroot/jails']
+    zfs_dataset: 'zroot'
+    t_timestamp: "{{ timestamp.stdout }}"
+  tasks:
+#    - name: get timestamp of the day
+#      command: date +%Y%m%d
+#      register: timestamp
+#
+#    - name: gather zfs dataset facts
+#      zfs_facts:
+#        dataset: "{{ zfs_dataset }}"
+#
+#    - name: Take a snapshot from filesystem
+#      zfs:
+#        name: "{{  item }}@before-update-{{ t_timestamp }}"
+#        state: present
+#      with_items:
+#        - "{{ zfs_datasets }}"
+
+    - name: Fetch any new FreeBSD updates
+      shell: freebsd-update --not-running-from-cron fetch
+      when: ansible_distribution == 'FreeBSD'
+      register: result_update
+      changed_when: "'No updates needed' not in result_update.stdout"
+
+    - debug: var=result_update
+      when: result_update.changed
+
+    - name: Install FreeBSD updates
+      shell: freebsd-update --not-running-from-cron install
+      when: ansible_distribution == 'FreeBSD' and result_update.changed
+      register: result_update_install
+
+    - debug: var=result_update_install
+      when: result_update_install.changed
+
+    - name: Upgrade FreeBSD packages
+      shell: pkg-static -f upgrade
+      when: ansible_distribution == 'FreeBSD'
+      register: result_pkg
+      changed_when: "'Your packages are up to date' not in result_pkg.stdout"
+
+    - debug: var=result_pkg
+      when: result_pkg.changed

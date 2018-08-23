@@ -1,0 +1,45 @@
+---
+- hosts: all
+  vars_files:
+    - vars.yml
+packages: ['nfs-server', 'nfs-utils']
+  tasks:
+    - name: install nfs
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - "{{ packages }}"
+
+    - name: create directories with appropriate perms
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: 36
+        group: 36
+      with_items:
+        - "{{ directories }}"
+
+    - name: setup exports file
+      template:
+        src: exports.j2
+        dest: /etc/exports
+
+    - name: make sure nfs is enabled
+      service:
+        name: "{{ item[0] }}"
+        state: "{{ item[1] }}"
+      with_items:
+        - "{{ services }}"
+        - "{{ svc_states }}"
+
+    - name: make mounts
+      mount:
+        path: "{{ mount_ips }}/{{ item }}"
+        src: "{{ data_dir }}"
+        fstype: nfs
+        opts: "{{ mount_opts}}"
+        state: mounted
+      with_items:
+        - "{{ iso_domain }}"
+        - "{{ data_domain }}"
